@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cadastro de Produção</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 30px;
+    }
+    
+form {
+  background-color: white;
+  box-shadow: 0px 4px 10px rgba(0,0,0,0.1);
+  padding: 30px;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 400px;
+  margin: auto;
+}
+
+    
+    label {
+      display: block;
+      margin-bottom: 10px;
+    }
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+  margin-top: 10px;
+  background-color: #ffffff;
+  box-shadow: 0px 3px 10px rgba(0,0,0,0.05);
+}
+
+th {
+  background-color: #0984e3;
+  color: white;
+}
+
+th, td {
+  padding: 12px;
+  text-align: center;
+  border: 1px solid #dcdde1;
+}
+
+    
+    .linha-total {
+      background-color: #dfe6e9;
+      font-weight: bold;
+    }
+    .bloco-data {
+      margin-bottom: 40px;
+    }
+    button {
+  background-color: #0984e3;
+  color: white;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 6px;
+  margin: 5px 5px 5px 0;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background-color 0.3s;
+}
+
+button:hover {
+  background-color: #74b9ff;
+}
+
+  </style>
+</head>
+<body>
+<!-- Verificação de Usuario -->
+<script>
+  const usuarioLogado = localStorage.getItem("usuarioLogado");
+  if (!usuarioLogado) {
+    window.location.href = "login.html";
+  }
+</script>
+
+<h1 style="text-align: center;"><strong>Bem Vindo:</strong> <span id="nomeUsuario"></span></h1>
+<button onclick="abrirConfiguracoes()">⚙️ Configurar Tema</button>
+
+<script>
+  document.getElementById("nomeUsuario").innerText = usuarioLogado;
+</script>
+
+  
+
+<!-- Modal inicial-->
+<button onclick="abrirAdicionar()">🚘 Adicionar</button> 
+  
+<div id="modal-adicionar" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background-color:rgba(0,0,0,0.5);">
+  <div style="background:#fff; margin: 10% auto; padding: 20px; width: 300px; border-radius: 10px; position:relative;">
+    <h3>Editar Registro</h3>
+    <form id="form-edicao">
+      <label>Data: <input type="date" id="edit-data"></label><br><br>
+      <label>Odometro Inicial: <input type="number" id="odometro-inicial"></label><br><br>
+      <label>Dinheiro Inicial: <input type="number" id="dinheiro-inicial"></label><br><br>
+      <label>App Uber Inicial: <input type="number" id="uber-inicial"></label><br><br>
+      <label>App 99 Inicial: <input type="number" id="nove-inicial"></label><br><br>
+      <label>App Uber Conta Inicial: <input type="number" id="uberConta-inicial"></label><br><br>
+      <label>App Nu Conta Inicial: <input type="number" id="nuConta-inicial"></label><br><br>
+       
+      
+      
+
+      <input type="hidden" id="edit-index">
+      <button type="button" onclick="salvarAdicionar()">Salvar</button>
+      <button type="button" onclick="fecharAdicionar()">Cancelar</button>
+    </form>
+  </div>
+</div>
+
+
+  <!-- Modal de Edição -->
+<div id="modal-edicao" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background-color:rgba(0,0,0,0.5);">
+  <div style="background:#fff; margin: 10% auto; padding: 20px; width: 300px; border-radius: 10px; position:relative;">
+    <h3>Editar Registro</h3>
+    <form id="form-edicao">
+      <label>Data: <input type="date" id="edit-data"></label><br><br>
+      <label>Odometro Inicial: <input type="number" id="odometro-inicial"></label><br><br>
+      <label>Dinheiro Inicial: <input type="number" id="dinheiro-inicial"></label><br><br>
+      <label>App Uber Inicial: <input type="number" id="uber-inicial"></label><br><br>
+      <label>App 99 Inicial: <input type="number" id="nove-inicial"></label><br><br>
+      <label>App Uber Conta Inicial: <input type="number" id="uberConta-inicial"></label><br><br>
+      <label>App Nu Conta Inicial: <input type="number" id="nuConta-inicial"></label><br><br>
+
+      <input type="hidden" id="edit-index">
+      <button type="button" onclick="salvarEdicao()">Salvar</button>
+      <button type="button" onclick="fecharModal()">Cancelar</button>
+    </form>
+  </div>
+</div>
+<!-- Modal de Edição de tema -->
+  <div id="modal-config" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background-color:rgba(0,0,0,0.4);">
+  <div style="background:#fff; margin:10% auto; padding:20px; width:300px; border-radius:10px;">
+    <h3>Configuração de Tema</h3>
+    
+    <label>Cor de Fundo:
+      <input type="color" id="corFundo">
+    </label><br><br>
+
+    <label>Imagem de Fundo (URL):
+      <input type="text" id="urlImagem" placeholder="https://...">
+    </label><br><br>
+
+    <button onclick="salvarTema()">Salvar</button>
+    <button onclick="fecharConfiguracoes()">Cancelar</button>
+  </div>
+</div>
+
+  
+  <h3>Registros por Data</h3>
+  <div id="registros-container"></div>
+
+  <script>
+    window.onload = carregarDoLocalStorage;
+/// salvar
+
+function salvarAdicionar() {
+  const data = document.getElementById("edit-data").value;
+  const odomentroInicial = Number(document.getElementById("odometro-inicial").value);
+  const dinheiroInicial = Number(document.getElementById("dinheiro-inicial").value);
+  const uberInicial = Number(document.getElementById("uber-inicial").value);
+  const noveInicial = Number(document.getElementById("nove-inicial").value);
+  const uberContaInicial = Number(document.getElementById("uberConta-inicial").value);
+  const nuContaInicial = Number(document.getElementById("nuConta-inicial").value);
+
+  if (!data || !odomentroInicial && !dinheiroInicial && !uberInicial && !noveInicial && !uberContaInicial && !nuContaInicial) {
+    alert("Preencha todos os campos.");
+    return;
+  }
+
+  const novoRegistro = {
+    data,
+    odomentroInicial,
+    dinheiroInicial,
+    uberInicial,
+    noveInicial,
+    uberContaInicial,
+    nuContaInicial
+  };
+
+  const registros = JSON.parse(localStorage.getItem("registros") || "[]");
+  registros.push(novoRegistro);
+  localStorage.setItem("registros", JSON.stringify(registros));
+
+document.querySelector("#form-edicao").reset();
+
+  fecharAdicionar(); // Fecha o modal
+  carregarDoLocalStorage(); // Atualiza a tela
+}
+
+
+    /*
+    function adicionar() {
+      const data = document.getElementById("data").value;
+      const ordem = document.getElementById("ordem").value;
+      const referencia = document.getElementById("referencia").value;
+      const quantidade = document.getElementById("quantidade").value;
+      const tiposSelecionados = Array.from(document.getElementById("tipos").selectedOptions).map(o => o.value);
+
+      if (!data || !ordem && !referencia || tiposSelecionados.length === 0 || !quantidade) {
+        alert("Preencha todos os campos.");
+        return;
+      }
+
+      const novoRegistro = {
+        data,
+        ordem,
+        referencia,
+        tipos: tiposSelecionados,
+        quantidade: Number(quantidade)
+      };
+
+      const registros = JSON.parse(localStorage.getItem("registros") || "[]");
+      registros.push(novoRegistro);
+      localStorage.setItem("registros", JSON.stringify(registros));
+      document.getElementById("formulario").reset();
+      carregarDoLocalStorage();
+    }
+    */
+///////// 
+/*
+    function carregarDoLocalStorage() {
+      const container = document.getElementById("registros-container");
+      container.innerHTML = "";
+      const registros = JSON.parse(localStorage.getItem("registros") || "[]");
+
+      const agrupadosPorData = {};
+      registros.forEach((r, i) => {
+        if (!agrupadosPorData[r.data]) agrupadosPorData[r.data] = [];
+        agrupadosPorData[r.data].push({...r, index: i});
+      });
+
+     const datasOrdenadas = Object.keys(agrupadosPorData).sort((a, b) => new Date(a) - new Date(b));
+for (let data of datasOrdenadas) {
+
+        const bloco = document.createElement("div");
+        bloco.className = "bloco-data";
+
+        const titulo = document.createElement("h4");
+        titulo.innerText = `Data: ${data}`;
+        bloco.appendChild(titulo);
+
+        const tabela = document.createElement("table");
+        const thead = tabela.createTHead();
+        thead.innerHTML = `<tr><th>Ordem</th><th>Referência</th><th>Tipos</th><th>Quantidade</th><th>Ações</th></tr>`;
+        const tbody = document.createElement("tbody");
+
+        let total = 0;
+        agrupadosPorData[data].forEach(registro => {
+          const linha = tbody.insertRow();
+          linha.insertCell(0).innerText = registro.ordem;
+          linha.insertCell(1).innerText = registro.referencia;
+          linha.insertCell(2).innerText = registro.tipos.join(", ");
+          linha.insertCell(3).innerText = registro.quantidade;
+          total += registro.quantidade;
+
+          const acoes = linha.insertCell(4);
+/////////////////////////////////////////////////////////
+         /* const btnExcluir = document.createElement("button");
+          btnExcluir.textContent = "Excluir";
+          btnExcluir.onclick = () => excluir(registro.index);
+          acoes.appendChild(btnExcluir);*/
+//////////////////////////////////////////////////////// 
+/*
+          const btnExcluir = document.createElement("button");
+          btnExcluir.textContent = "Excluir";
+          btnExcluir.onclick = () => excluir(registro.index);
+          acoes.appendChild(btnExcluir);
+
+          const btnEditar = document.createElement("button");
+          btnEditar.textContent = "Editar";
+          btnEditar.style.marginLeft = "10px";
+          btnEditar.onclick = () => editarLinha(registro.index);
+          acoes.appendChild(btnEditar);
+
+          
+        });
+
+        // Linha total
+        const linhaTotal = tbody.insertRow();
+        linhaTotal.className = "linha-total";
+        linhaTotal.innerHTML = `<td colspan="3" style="text-align:right;">TOTAL:</td><td>${total}</td><td></td>`;
+
+        tabela.appendChild(tbody);
+        bloco.appendChild(tabela);
+        container.appendChild(bloco);
+      }
+    }
+*/
+
+function carregarDoLocalStorage() {
+  const container = document.getElementById("registros-container");
+  container.innerHTML = "";
+  const registros = JSON.parse(localStorage.getItem("registros") || "[]");
+
+  const agrupadosPorData = {};
+  registros.forEach((r, i) => {
+    if (!agrupadosPorData[r.data]) agrupadosPorData[r.data] = [];
+    agrupadosPorData[r.data].push({...r, index: i});
+  });
+
+  const datasOrdenadas = Object.keys(agrupadosPorData).sort((a, b) => new Date(a) - new Date(b));
+
+  for (let data of datasOrdenadas) {
+    const bloco = document.createElement("div");
+    bloco.className = "bloco-data";
+
+    const titulo = document.createElement("h4");
+    titulo.innerText = `Data: ${data}`;
+    bloco.appendChild(titulo);
+
+    const producao = agrupadosPorData[data].filter(r => r.quantidade !== undefined);
+    const financeiro = agrupadosPorData[data].filter(r => r.odomentroInicial !== undefined);
+
+    // Tabela de Produção
+    if (producao.length > 0) {
+      const tabelaProd = document.createElement("table");
+      const theadProd = tabelaProd.createTHead();
+      theadProd.innerHTML = `<tr><th>Ordem</th><th>Referência</th><th>Tipos</th><th>Quantidade</th><th>Ações</th></tr>`;
+      const tbodyProd = document.createElement("tbody");
+
+      let total = 0;
+      producao.forEach(registro => {
+        const linha = tbodyProd.insertRow();
+        linha.insertCell(0).innerText = registro.ordem;
+        linha.insertCell(1).innerText = registro.referencia;
+        linha.insertCell(2).innerText = registro.tipos.join(", ");
+        linha.insertCell(3).innerText = registro.quantidade;
+        total += registro.quantidade;
+
+        const acoes = linha.insertCell(4);
+        const btnExcluir = document.createElement("button");
+        btnExcluir.textContent = "Excluir";
+        btnExcluir.onclick = () => excluir(registro.index);
+        acoes.appendChild(btnExcluir);
+
+        const btnEditar = document.createElement("button");
+        btnEditar.textContent = "Editar";
+        btnEditar.style.marginLeft = "10px";
+        btnEditar.onclick = () => editarLinha(registro.index);
+        acoes.appendChild(btnEditar);
+      });
+
+      const linhaTotal = tbodyProd.insertRow();
+      linhaTotal.className = "linha-total";
+      linhaTotal.innerHTML = `<td colspan="3" style="text-align:right;">TOTAL:</td><td>${total}</td><td></td>`;
+
+      tabelaProd.appendChild(tbodyProd);
+      bloco.appendChild(tabelaProd);
+    }
+
+    // Tabela Financeira / Odômetro
+    if (financeiro.length > 0) {
+      const tabelaFin = document.createElement("table");
+      const theadFin = tabelaFin.createTHead();
+      theadFin.innerHTML = `<tr><th>Odômetro</th><th>Dinheiro</th><th>Uber</th><th>99</th><th>Uber Conta</th><th>NuConta</th><th>Ações</th></tr>`;
+      const tbodyFin = document.createElement("tbody");
+
+      financeiro.forEach(registro => {
+        const linha = tbodyFin.insertRow();
+        linha.insertCell(0).innerText = registro.odomentroInicial;
+        linha.insertCell(1).innerText = registro.dinheiroInicial;
+        linha.insertCell(2).innerText = registro.uberInicial;
+        linha.insertCell(3).innerText = registro.noveInicial;
+        linha.insertCell(4).innerText = registro.uberContaInicial;
+        linha.insertCell(5).innerText = registro.nuContaInicial;
+
+        const acoes = linha.insertCell(6);
+        const btnExcluir = document.createElement("button");
+        btnExcluir.textContent = "Excluir";
+        btnExcluir.onclick = () => excluir(registro.index);
+        acoes.appendChild(btnExcluir);
+
+        // Botão de edição futura (se quiser)
+      });
+
+      tabelaFin.appendChild(tbodyFin);
+      bloco.appendChild(tabelaFin);
+    }
+
+    container.appendChild(bloco);
+  }
+}
+
+
+    function excluir(index) {
+      let registros = JSON.parse(localStorage.getItem("registros") || "[]");
+      registros.splice(index, 1);
+      localStorage.setItem("registros", JSON.stringify(registros));
+      carregarDoLocalStorage();
+    }
+    function editarLinha(index) {
+  const registros = JSON.parse(localStorage.getItem("registros") || "[]");
+  const registro = registros[index];
+
+  // Preencher os campos com os dados atuais
+  document.getElementById("edit-data").value = registro.data;
+  document.getElementById("edit-ordem").value = registro.ordem;
+  document.getElementById("edit-referencia").value = registro.referencia;
+  document.getElementById("edit-quantidade").value = registro.quantidade;
+  document.getElementById("edit-index").value = index;
+
+  // Selecionar as opções do select múltiplo
+  const select = document.getElementById("edit-tipos");
+  Array.from(select.options).forEach(option => {
+    option.selected = registro.tipos.includes(option.value);
+  });
+
+  document.getElementById("modal-edicao").style.display = "block";
+}
+function fecharModal() {
+  document.getElementById("modal-edicao").style.display = "none";
+}
+
+
+// 
+
+function salvar() {
+  const index = document.getElementById("edit-index").value;
+  const registros = JSON.parse(localStorage.getItem("registros") || "[]");
+
+  const data = document.getElementById("edit-data").value;
+  const odomentroInicial = Number(document.getElementById("odomentro-inicial").value);
+  const dinheiroInicial = Number(document.getElementById("dinheiro-inicial").value);
+  const uberInicial = Number(document.getElementById("uber-inicial").value);
+  const noveInicial = Number(document.getElementById("nove-inicial").value);
+  const uberContaInicial = Number(document.getElementById("uberConta-inicial").value);
+  const nuContaInicial = Number(document.getElementById("nuConta-inicial").value);
+
+  
+
+  if (!data || !odomentroInicial || !dinheiroInicial || !uberInicial || !noveInicial || !uberContaInicial || !nuContaInicial) {
+    alert("Preencha todos os campos.");
+    return;
+  }
+
+  registros[index] = {
+    data,
+    odomentroInicial,
+    dinheiroInicial,
+    uberInicial,
+    noveInicial,
+    uberContaInicial,
+    nuContaInicial
+  };
+
+  localStorage.setItem("registros", JSON.stringify(registros));
+  fecharModal();
+  atualizarTabela();
+}
+
+
+// 
+    function atualizarTabela() {
+  carregarDoLocalStorage();
+}
+
+// Aplica tema salvo
+  function aplicarTema() {
+    const cor = localStorage.getItem("temaCor");
+    const img = localStorage.getItem("temaImagem");
+
+    if (img) {
+      document.body.style.background = `url(${img}) no-repeat center center fixed`;
+      document.body.style.backgroundSize = "cover";
+    } else if (cor) {
+      document.body.style.background = cor;
+    } else {
+      // Tema padrão (degradê amarelo)
+      document.body.style.background = "linear-gradient(to bottom right, #f6e58d, #e1a100)";
+    }
+  }
+
+  function abrirConfiguracoes() {
+    document.getElementById("modal-config").style.display = "block";
+  }
+  function abrirAdicionar() {
+    document.getElementById("modal-adicionar").style.display = "block";
+  }
+
+  function fecharConfiguracoes() {
+    document.getElementById("modal-config").style.display = "none";
+  }
+  function fecharAdicionar() {
+    document.getElementById("modal-adicionar").style.display = "none"
+  }
+
+  function salvarTema() {
+    const cor = document.getElementById("corFundo").value;
+    const img = document.getElementById("urlImagem").value.trim();
+
+    if (img) {
+      localStorage.setItem("temaImagem", img);
+      localStorage.removeItem("temaCor");
+    } else {
+      localStorage.setItem("temaCor", cor);
+      localStorage.removeItem("temaImagem");
+    }
+
+    aplicarTema();
+    fecharConfiguracoes();
+  }
+
+  window.onload = () => {
+  aplicarTema();
+  carregarDoLocalStorage(); 
+};
+
+  </script>
+</body>
+</html>
