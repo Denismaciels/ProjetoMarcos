@@ -57,7 +57,9 @@
     <h2>Login Produção</h2>
     <input type="text" id="usuario" placeholder="Usuário">
     <input type="password" id="senha" placeholder="Senha">
-    <button class="btn" onclick="login()">Entrar</button>
+    <button class="btn" onclick="login()">Entrar1</button>
+     <button class="btn" onclick="login2()">Entrar</button>
+    
      
   <button class="btn-config" onclick="abrirConfiguracoes()">⚙️ Configurar Tema</button>
 
@@ -135,6 +137,32 @@
 
       localStorage.setItem("usuarioLogado", usuario);
       window.location.href = "index.html";
+    }
+     function login2() {
+      const usuario = document.getElementById("usuario").value.trim();
+      const senha = document.getElementById("senha").value;
+
+      if (!usuario || !senha) {
+        alert("Preencha todos os campos.");
+        return;
+      }
+
+      let usuarios = JSON.parse(localStorage.getItem("usuarios") || "{}");
+
+      if (usuarios[usuario]) {
+        if (usuarios[usuario] !== senha) {
+          alert("Senha incorreta.");
+          return;
+        }
+      } else {
+        // Cadastra novo usuário
+        usuarios[usuario] = senha;
+        localStorage.setItem("usuarios", JSON.stringify(usuarios));
+        alert("Usuário cadastrado com sucesso!");
+      }
+
+      localStorage.setItem("usuarioLogado", usuario);
+      window.location.href = "index2.html";
     }
   </script>
 </body>
