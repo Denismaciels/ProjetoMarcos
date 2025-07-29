@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Relatório Financeiro</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 30px;
+    }
+
+    h2 {
+      text-align: center;
+    }
+
+    input[type="date"] {
+      padding: 8px;
+      margin-bottom: 15px;
+      display: block;
+      margin: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+
+    th, td {
+      border: 1px solid #ccc;
+      padding: 10px;
+      text-align: center;
+    }
+
+    th {
+      background-color: #0984e3;
+      color: white;
+    }
+
+    button {
+      background-color: #27ae60;
+      color: white;
+      padding: 10px 16px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      margin: 10px;
+    }
+
+    button:hover {
+      background-color: #2ecc71;
+    }
+
+    #relatorio-container {
+      margin-top: 30px;
+    }
+  </style>
+</head>
+<body>
+  <h2>Relatório de Produção</h2>
+
+  <label for="dataBusca" style="text-align:center; display:block;">Filtrar por data:</label>
+  <input type="date" id="dataBusca" onchange="filtrarPorData()" />
+
+  <div id="relatorio-container"></div>
+
+  <button onclick="exportarParaExcel()">Exportar para Excel</button>
+
+  <script>
+    let dadosFiltrados = [];
+
+    function carregarRelatorio(dataFiltro = null) {
+      const container = document.getElementById("relatorio-container");
+      container.innerHTML = "";
+
+      const registros = JSON.parse(localStorage.getItem("registros") || "[]");
+      if (registros.length === 0) {
+        container.innerHTML = "<p>Nenhum dado encontrado.</p>";
+        return;
+      }
+
+      // Filtrar se tiver data
+      let registrosFiltrados = registros;
+      if (dataFiltro) {
+        registrosFiltrados = registros.filter(reg => reg.data === dataFiltro);
+      }
+
+      dadosFiltrados = registrosFiltrados; // para exportação
+
+      let html = `
+        <table>
+          <thead>
+            <tr>
+              <th>Data</th>
+              <th>Odômetro</th>
+              <th>Dinheiro</th>
+              <th>Uber</th>
+              <th>99</th>
+              <th>Uber Conta</th>
+              <th>NuConta</th>
+              <th>Lucro</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
+
+      registrosFiltrados.forEach(reg => {
+        const lucro = (
+          (reg.dinheiroFinal + reg.uberFinal + reg.noveFinal + reg.uberContaFinal + reg.nuContaFinal) -
+          (reg.dinheiroInicial + reg.uberInicial + reg.noveInicial + reg.uberContaInicial + reg.nuContaInicial)
+        ).toFixed(2);
+
+        html += `
+          <tr>
+            <td>${reg.data}</td>
+            <td>${reg.odometroInicial} → ${reg.odometroFinal}</td>
+            <td>R$ ${reg.dinheiroInicial} → R$ ${reg.dinheiroFinal}</td>
+            <td>R$ ${reg.uberInicial} → R$ ${reg.uberFinal}</td>
+            <td>R$ ${reg.noveInicial} → R$ ${reg.noveFinal}</td>
+            <td>R$ ${reg.uberContaInicial} → R$ ${reg.uberContaFinal}</td>
+            <td>R$ ${reg.nuContaInicial} → R$ ${reg.nuContaFinal}</td>
+            <td><strong>R$ ${lucro}</strong></td>
+          </tr>
+        `;
+      });
+
+      html += "</tbody></table>";
+      container.innerHTML = html;
+    }
+
+    function filtrarPorData() {
+      const data = document.getElementById("dataBusca").value;
+      carregarRelatorio(data);
+    }
+
+    function exportarParaExcel() {
+      if (dadosFiltrados.length === 0) {
+        alert("Nenhum dado para exportar!");
+        return;
+      }
+
+      let csv = "Data,Odômetro, Dinheiro, Uber, 99, Uber Conta, NuConta, Lucro\n";
+      dadosFiltrados.forEach(reg => {
+        const lucro = (
+          (reg.dinheiroFinal + reg.uberFinal + reg.noveFinal + reg.uberContaFinal + reg.nuContaFinal) -
+          (reg.dinheiroInicial + reg.uberInicial + reg.noveInicial + reg.uberContaInicial + reg.nuContaInicial)
+        ).toFixed(2);
+
+        csv += `${reg.data},${reg.odometroInicial}→${reg.odometroFinal},R$${reg.dinheiroInicial}→R$${reg.dinheiroFinal},R$${reg.uberInicial}→R$${reg.uberFinal},R$${reg.noveInicial}→R$${reg.noveFinal},R$${reg.uberContaInicial}→R$${reg.uberContaFinal},R$${reg.nuContaInicial}→R$${reg.nuContaFinal},R$${lucro}\n`;
+      });
+
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "relatorio_financeiro.csv";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
+
+    window.onload = carregarRelatorio;
+  </script>
+</body>
+</html>
