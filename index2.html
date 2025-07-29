@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Gestao Financeira</title>
+  <link rel="shortcut icon" type="image/x-icon" href="./img/carro-icon.png">
+  <style>
+     body {
+      font-family: Arial, sans-serif;
+      margin: 30px;
+    }
+    
+form {
+  background-color: white;
+  box-shadow: 0px 4px 10px rgba(0,0,0,0.1);
+  padding: 30px;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 400px;
+  margin: auto;
+}
+
+    
+    label {
+      display: block;
+      margin-bottom: 10px;
+    }
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+  margin-top: 10px;
+  background-color: #ffffff;
+  box-shadow: 0px 3px 10px rgba(0,0,0,0.05);
+}
+
+th {
+  background-color: #0984e3;
+  color: white;
+}
+
+th, td {
+  padding: 12px;
+  text-align: center;
+  border: 1px solid #dcdde1;
+}
+
+    
+    .linha-total {
+      background-color: #dfe6e9;
+      font-weight: bold;
+    }
+    .bloco-data {
+      margin-bottom: 40px;
+    }
+    button {
+  background-color: #0984e3;
+  color: white;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 6px;
+  margin: 5px 5px 5px 0;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background-color 0.3s;
+}
+
+button:hover {
+  background-color: #74b9ff;
+}
+
+    #modalAdicionar, #modalFinalizar {
+      display: none;
+      position: fixed;
+      top: 10%;
+      left: 50%;
+      transform: translateX(-50%);
+      background: white;
+      padding: 20px;
+      border: 2px solid #555;
+      border-radius: 10px;
+      z-index: 1000;
+    }
+
+    .positivo { color: green; }
+.negativo { color: red; }
+
+  </style>
+</head>
+<body>
+<!-- Verificação de Usuario -->
+<script>
+  const usuarioLogado = localStorage.getItem("usuarioLogado");
+  if (!usuarioLogado) {
+    window.location.href = "login.html";
+  }
+</script>
+
+  <h1 style="text-align: center;"><strong>Bem Vindo:</strong> <span id="nomeUsuario"></span></h1>
+  <script>
+  document.getElementById("nomeUsuario").innerText = usuarioLogado;
+</script>
+<h2>Gestão Financeira</h2>
+
+<button onclick="abrirAdicionar()">Adicionar Dados</button>
+<!-- <button onclick="abrirFinalizar()">Finalizar Dia</button> -->
+ <button src="/relatorio.html">Relatorio</button>
+<button onclick="exportarParaExcel()">Exportar para Excel</button>
+
+<div id="lista-registros"></div>
+
+<!-- Modal Adicionar -->
+<div id="modal-adicionar" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background-color:rgba(0,0,0,0.5);">
+  <div style="background:#fff; margin: 5% auto; padding: 20px; width: 300px; border-radius: 10px; position:relative;">
+    <h3>Editar Registro</h3>
+    <form id="form-edicao">
+      <label>Data: <input type="date" id="data"></label><br><br>
+      <label>Odometro Inicial: <input type="number" id="odometro-inicial"></label>
+      <label>Dinheiro Inicial: <input type="number" id="dinheiro-inicial"></label>
+      <label>App Uber Inicial: <input type="number" id="uber-inicial"></label>
+      <label>App 99 Inicial: <input type="number" id="nove-inicial"></label>
+      <label>App Uber Conta Inicial: <input type="number" id="uberConta-inicial"></label>
+      <label>App Nu Conta Inicial: <input type="number" id="nuConta-inicial"></label>
+       
+      
+      
+
+      <input type="hidden" id="edit-index">
+      <button type="button" onclick="Adicionar()">Salvar</button>
+      <button type="button" onclick="fecharAdicionar()">Cancelar</button>
+    </form>
+  </div>
+</div>
+
+<!-- Modal Finalizar -->
+ <div id="modal-finalizar" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background-color:rgba(0,0,0,0.5);">
+  <div style="background:#fff; margin: 5% auto; padding: 20px; width: 300px; border-radius: 10px; position:relative;">
+
+  <h3>Finalizar Dia</h3>
+  <form id="form-finalizar">
+    <label>Data: <input type="date" id="final-data" required></label>
+    <label>Odômetro Final: <input type="number" id="odometro-final"></label>
+    <label>Dinheiro Final: <input type="number" id="dinheiro-final"></label>
+    <label>Uber Final: <input type="number" id="uber-final"></label>
+    <label>Nubank Final: <input type="number" id="nove-final"></label>
+    <label>Uber Conta Final: <input type="number" id="uberConta-final"></label>
+    <label>NuConta Final: <input type="number" id="nuConta-final"></label>
+
+    <button type="button" onclick="Finalizar()">Salvar</button>
+    <button type="button" onclick="fecharFinalizar()">Fechar</button>
+  </form>
+</div>
+</div>
+
+<!-- Modal EdiitarAdicionar -->
+ <div id="modal-editar-registros" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background-color:rgba(0,0,0,0.5);">
+  <div style="background:#fff; margin: 5% auto; padding: 20px; width: 300px; border-radius: 10px; position:relative;">
+
+  <h3>Editar Adicionar Dados Iniciais</h3>
+  <form id="form-edit-adicionar">
+    <label>Data: <input type="date" id="edit-data" required></label>
+    <label>Odômetro Inicial: <input type="number" id="edit-odometro-inicial"></label>
+    <label> odomentro FInal: <input type="number" id="edit-odometro-final"></label>
+    <label>Dinheiro Inicial: <input type="number" id="edit-dinheiro-inicial"></label>
+    <label> Dinheiro Final: <input type="number" id="edit-dinheiro-final"></label>
+    <label>Uber Inicial: <input type="number" id="edit-uber-inicial"></label>
+    <label>Uber Final: <input type="number" id="edit-uber-final"></label>
+   <label> NoveInicial: <input type="number" id="edit-nove-inicial"></label>
+   <label> NoveFinal: <input type="number" id="edit-nove-final"></label>
+    <label>Uber Conta Inicial: <input type="number" id="edit-uberConta-inicial"></label>
+    <label> Uber Conta Final: <input type="number" id="edit-uberConta-final"></label>
+    <label>NuConta Inicial: <input type="number" id="edit-nuConta-inicial"></label>
+    <label> NuConta Final: <input type="number" id="edit-nuConta-final"></label>
+   <!-- <button type="button" onclick="editarRegistro()">Salvar</button> -->
+    <button type="button" onclick="salvarEdicaoRegistro()">Salvar</button>
+
+    <button type="button" onclick="fecharEditAdicionar()">Fechar</button>
+  </form>
+</div>
+</div>
+</div>
+
+<!-- Modal Finalizar -->
+ <div id="modal-edtar-Finalizar" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background-color:rgba(0,0,0,0.5);">
+  <div style="background:#fff; margin: 5% auto; padding: 20px; width: 300px; border-radius: 10px; position:relative;">
+<div id="modalEditFinalizar">
+  <h3>Editar Finalizar Dia</h3>
+  <form id="form-finalizar">
+    <label>Data: <input type="date" id="final-data" required></label>
+    <label>Odômetro Final: <input type="number" id="odometro-final"></label>
+    <label>Dinheiro Final: <input type="number" id="dinheiro-final"></label>
+    <label>Uber Final: <input type="number" id="uber-final"></label>
+    <label>Nubank Final: <input type="number" id="nove-final"></label>
+    <label>Uber Conta Final: <input type="number" id="uberConta-final"></label>
+    <label>NuConta Final: <input type="number" id="nuConta-final"></label>
+    <button type="button" onclick="salvarFinalizar()">Salvar</button>
+    <button type="button" onclick="fecharFinalizar()">Fechar</button>
+  </form>
+</div>
+</div>
+</div>
+
+
+<script>
+  window.onload = carregarDoLocalStorageFinanceiro();
+
+  // funcção abrir e fechar modais
+  function abrirAdicionar(){
+   // fechar modal: document.getElementById("modal-edicao").style.display = "none";
+    document.getElementById("modal-adicionar").style.display = "block";
+  }
+  function fecharAdicionar(){
+    document.getElementById("modal-adicionar").style.display = "none";
+  }
+  function abrirFinalizar(){
+    document.getElementById("modal-finalizar").style.display = "block"
+  }
+  function fecharFinalizar(){
+    document.getElementById("modal-finalizar").style.display = "none";
+  }
+  function fecharEditAdicionar(){
+    document.getElementById("modal-editar-registros").style.display="none";
+  }
+
+function Adicionar() {
+  const data = document.getElementById("data").value;
+ 
+  
+
+  const odometroInicial = Number(document.getElementById("odometro-inicial").value) || 0;
+  const odometroFinal = 0;
+  const dinheiroInicial = Number(document.getElementById("dinheiro-inicial").value) || 0;
+  const dinheiroFinal = 0;
+  const uberInicial = Number(document.getElementById("uber-inicial").value) || 0;
+  const uberFinal =  0;
+  const noveInicial = Number(document.getElementById("nove-inicial").value) || 0;
+  const noveFinal =  0;
+  const uberContaInicial = Number(document.getElementById("uberConta-inicial").value) || 0;
+  const uberContaFinal =  0;
+  const nuContaInicial = Number(document.getElementById("nuConta-inicial").value) ||0;
+  const nuContaFinal =  0;
+
+  if(!data ){
+    alert("Preencha a data!")
+    return;
+  }
+
+  const novoRegistro = {
+    data,
+    odometroInicial,
+    odometroFinal,
+    dinheiroInicial,
+    dinheiroFinal,
+    uberInicial,
+    uberFinal,
+    noveInicial,
+    noveFinal,
+    uberContaInicial,
+    uberContaFinal,
+    nuContaInicial,
+    nuContaFinal
+  };
+  
+
+  const registros = JSON.parse(localStorage.getItem("registros") || "[]");
+  registros.push(novoRegistro);
+  localStorage.setItem("registros", JSON.stringify(registros));
+  carregarDoLocalStorageFinanceiro();
+  fecharAdicionar();
+}
+
+function calcularLucro(registro) {
+  const entrada = registro.dinheiroFinal + registro.uberFinal + registro.noveFinal + registro.uberContaFinal + registro.nuContaFinal;
+  const saida = registro.dinheiroInicial + registro.uberInicial + registro.noveInicial + registro.uberContaInicial + registro.nuContaInicial;
+  return (entrada - saida).toFixed(2);
+}
+
+
+function carregarDoLocalStorageFinanceiro() {
+  const listaRegistros = document.getElementById("lista-registros");
+  listaRegistros.innerHTML = "";
+
+  const registros = JSON.parse(localStorage.getItem("registros") || "[]");
+  if (registros.length === 0) {
+    listaRegistros.innerHTML = "<p>Nenhum registro encontrado.</p>";
+    return;
+  }
+
+  registros.forEach((registros, index) => {
+    const lucro = calcularLucro(registros);
+    const tabela = document.createElement("table");
+    tabela.border = "1";
+    tabela.style.marginBottom = "20px";
+    tabela.style.width = "100%";
+
+    const cabecalho = `
+      <tr style="background:#eee;">
+        <th colspan="8">Data: ${registros.data} | Lucro: R$ ${lucro}</th>
+      </tr>
+      <tr>
+        <th>Odômetro</th>
+        <th>Dinheiro</th>
+        <th>Uber</th>
+        <th>99</th>
+        <th>Uber Conta</th>
+        <th>NuConta</th>
+        <th>Lucro</th>
+        <th>Ações</th>
+      </tr>
+    `;
+
+    const linha = `
+      <tr>
+        <td>${registros.odometroInicial} → ${registros.odometroFinal}</td>
+        <td>R$ ${registros.dinheiroInicial} → R$ ${registros.dinheiroFinal}</td>
+        <td>R$ ${registros.uberInicial} → R$ ${registros.uberFinal}</td>
+        <td>R$ ${registros.noveInicial} → R$ ${registros.noveFinal}</td>
+        <td>R$ ${registros.uberContaInicial} → R$ ${registros.uberContaFinal}</td>
+        <td>R$ ${registros.nuContaInicial} → R$ ${registros.nuContaFinal}</td>
+        <td>R$ ${lucro}</td>
+        <td>
+          <button onclick="editarRegistro(${index})">Editar</button>
+          <button onclick="excluirRegistro(${index})">Excluir</button>
+        </td>
+      </tr>
+    `;
+
+    tabela.innerHTML = cabecalho + linha;
+    listaRegistros.appendChild(tabela);
+  });
+}
+//function editarRegistro(index){
+/*
+function editarRegistro(index) {
+  document.getElementById("modal=editar-registros").style.display="block";
+  const registros = JSON.parse(localStorage.getItem("registros") || "[]");
+  const reg = registros[index];
+
+  const odometroInicial = Number(document.getElementById("edit-odometro-inicial").value) || 0;
+  const odometroFinal = Number(document.getElementById("edit-odometro-final").value) || 0;
+  const dinheiroInicial = Number(document.getElementById("edit-dinheiro-inicial").value) || 0;
+  const dinheiroFinal = Number(document.getElementById("edit-dinheiro-final").value) || 0;
+  const uberInicial = Number(document.getElementById("edit-uber-inicial").value) || 0;
+  const uberFinal = Number(document.getElementById("edit-uber-final").value) || 0;
+  const noveInicial = Number(document.getElementById("edit-nove-inicial").value) || 0;
+  const noveFinal = Number(document.getElementById("edit-nove-final").value) || 0;
+  const uberContaInicial = Number(document.getElementById("edit-uberConta-inicial").value) || 0;
+  const uberContaFinal = Number(document.getElementById("edit-uberConta-final").value) || 0;
+  const nuContaInicial = Number(document.getElementById("edit-nuConta-inicial").value) || 0;
+  const nuContaFinal = Number(document.getElementById("edit-nuConta-final").value) || 0;
+
+  const novoRegistro = {
+    data,
+    odometroInicial,
+    odometroFinal,
+    dinheiroInicial,
+    dinheiroFinal,
+    uberInicial,
+    uberFinal,
+    noveInicial,
+    noveFinal,
+    uberContaInicial,
+    uberContaFinal,
+    nuContaInicial,
+    nuContaFinal
+  };
+
+
+  registros[index] = registros;
+  localStorage.setItem("registros", JSON.stringify(registros));
+  carregarDoLocalStorageFinanceiro();
+}
+*/
+//////////////////////////////////////////////////////////////////////
+
+function editarRegistro(index) {
+  const registros = JSON.parse(localStorage.getItem("registros") || "[]");
+  const reg = registros[index];
+
+  // Preenche os campos do formulário com os dados atuais
+  document.getElementById("edit-data").value = reg.data;
+  document.getElementById("edit-odometro-inicial").value = reg.odometroInicial;
+  document.getElementById("edit-odometro-final").value = reg.odometroFinal;
+  document.getElementById("edit-dinheiro-inicial").value = reg.dinheiroInicial;
+  document.getElementById("edit-dinheiro-final").value = reg.dinheiroFinal;
+  document.getElementById("edit-uber-inicial").value = reg.uberInicial;
+  document.getElementById("edit-uber-final").value = reg.uberFinal;
+  document.getElementById("edit-nove-inicial").value = reg.noveInicial;
+  document.getElementById("edit-nove-final").value = reg.noveFinal;
+  document.getElementById("edit-uberConta-inicial").value = reg.uberContaInicial;
+  document.getElementById("edit-uberConta-final").value = reg.uberContaFinal;
+  document.getElementById("edit-nuConta-inicial").value = reg.nuContaInicial;
+  document.getElementById("edit-nuConta-final").value = reg.nuContaFinal;
+
+  // Armazena o índice no campo hidden para usar ao salvar
+  document.getElementById("edit-index").value = index;
+
+  // Exibe o modal de edição
+  document.getElementById("modal-editar-registros").style.display = "block";
+}
+
+
+//////////////////////////////////////////////////////////////////////
+function excluirRegistro(index) {
+  if (!confirm("Tem certeza que deseja excluir este registro?")) return;
+  const registros = JSON.parse(localStorage.getItem("registros") || "[]");
+  registros.splice(index, 1);
+  localStorage.setItem("registros", JSON.stringify(registros));
+  carregarDoLocalStorageFinanceiro();
+}
+
+///////////////////////////////////////////////////////////////////////////////
+function salvarEdicaoRegistro() {
+  const index = document.getElementById("edit-index").value;
+  const registros = JSON.parse(localStorage.getItem("registros") || "[]");
+
+  const novoRegistro = {
+    data: document.getElementById("edit-data").value,
+    odometroInicial: Number(document.getElementById("edit-odometro-inicial").value) || 0,
+    odometroFinal: Number(document.getElementById("edit-odometro-final").value) || 0,
+    dinheiroInicial: Number(document.getElementById("edit-dinheiro-inicial").value) || 0,
+    dinheiroFinal: Number(document.getElementById("edit-dinheiro-final").value) || 0,
+    uberInicial: Number(document.getElementById("edit-uber-inicial").value) || 0,
+    uberFinal: Number(document.getElementById("edit-uber-final").value) || 0,
+    noveInicial: Number(document.getElementById("edit-nove-inicial").value) || 0,
+    noveFinal: Number(document.getElementById("edit-nove-final").value) || 0,
+    uberContaInicial: Number(document.getElementById("edit-uberConta-inicial").value) || 0,
+    uberContaFinal: Number(document.getElementById("edit-uberConta-final").value) || 0,
+    nuContaInicial: Number(document.getElementById("edit-nuConta-inicial").value) || 0,
+    nuContaFinal: Number(document.getElementById("edit-nuConta-final").value) || 0
+  };
+
+  registros[index] = novoRegistro;
+  localStorage.setItem("registros", JSON.stringify(registros));
+  carregarDoLocalStorageFinanceiro();
+  fecharEditAdicionar();
+}
+
+
+window.onload = carregarDoLocalStorageFinanceiro();
+</script>
+
+</script>
+
+</body>
+</html>
